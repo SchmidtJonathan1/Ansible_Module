@@ -30,22 +30,14 @@ try {
             $result.changed = $true
         }
 
-        if($null -ne $description){
-            if($null -ne $group){
-                if($group.Description -ne $description){
-                    If (-not $check_mode) {
-                        $group.description = $description
-                        $group.SetInfo()
-                    }
+        If ($null -ne $description) {
+            IF (-not $group.description -or $group.description -ne $description) {
+                If (-not $check_mode) {
+                    $group.description = $description
+                    $group.SetInfo()
                 }
                 $result.changed = $true
             }
-        }else{
-            If (-not $check_mode){
-                $group = $adsi.Create("Group", $name, $description)
-                $group.SetInfo()
-            }
-            $result.changed = $true
         }
     }
     ElseIf ($state -eq "absent" -and $group) {
@@ -58,17 +50,15 @@ try {
         If (-not $check_mode){
             $result.results = @()
             ForEach ($groups In $group){
-                #$result.results += New-Object -TypeName psobject -Property @{"group"= $group.Name}
                 $Members = @($group.psbase.Invoke("Members"))
                 ForEach ($Member In $Members){
                     $Class = $Member.GetType().InvokeMember("Class", 'GetProperty', $Null, $Member, $Null)
                     $NameMember = $Member.GetType().InvokeMember("Name", 'GetProperty', $Null, $Member, $Null)
-                    #$result.results += New-Object -TypeName psobject -Property @{"username"= $NameMember; "class"= $Class}
-                    #$result.results += @{"username"= $NameMember; "class"= $Class}
                     $result.results += @{"username"= $NameMember; "class"= $Class}
                 }
             }
         }
+        $result.changed = $true
     }
 }
 catch {
